@@ -1,0 +1,45 @@
+:root { --cgg-bg: #ffffff; --cgg-text: #171717; --cgg-muted: #6b6b6b; --cgg-border: rgba(0,0,0,.10); --cgg-accent: #10a37f; }
+@media (prefers-color-scheme: dark) { :root { --cgg-bg: #212121; --cgg-text: #f4f4f4; --cgg-muted: #aaa; --cgg-border: rgba(255,255,255,.13); } }
+.cgg-launcher { position: fixed; right: 18px; bottom: 88px; z-index: 2147483000; border: 1px solid var(--cgg-border); border-radius: 999px; padding: 10px 15px; background: var(--cgg-bg); color: var(--cgg-text); box-shadow: 0 8px 30px rgba(0,0,0,.16); font: 600 14px/1 system-ui,sans-serif; cursor: pointer; }
+.cgg-panel { position: fixed; top: 0; right: 0; z-index: 2147483001; width: min(390px, 94vw); height: 100vh; box-sizing: border-box; padding: 20px; background: var(--cgg-bg); color: var(--cgg-text); border-left: 1px solid var(--cgg-border); box-shadow: -20px 0 50px rgba(0,0,0,.16); transform: translateX(105%); transition: transform .22s ease; font-family: system-ui,sans-serif; display:flex; flex-direction:column; gap:14px; }
+.cgg-panel.is-open { transform: translateX(0); }
+.cgg-header,.cgg-goal-head,.cgg-card-actions,.cgg-modal-actions,.cgg-progress-wrap { display:flex; align-items:center; }
+.cgg-header,.cgg-goal-head { justify-content:space-between; gap:12px; }
+.cgg-header h2,.cgg-goal h3,.cgg-modal h2 { margin:0; }
+.cgg-header h2 { font-size:26px; }
+.cgg-eyebrow { display:block; color:var(--cgg-muted); font-size:11px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:2px; }
+.cgg-icon-btn { border:0; background:transparent; color:var(--cgg-muted); font-size:25px; cursor:pointer; padding:3px 7px; }
+.cgg-btn { border-radius:10px; padding:10px 13px; font-weight:650; border:1px solid transparent; cursor:pointer; }
+.cgg-btn-primary { background:var(--cgg-accent); color:#fff; }
+.cgg-btn-secondary { background:transparent; color:var(--cgg-text); border-color:var(--cgg-border); }
+.cgg-add { width:100%; }
+.cgg-list { overflow:auto; display:flex; flex-direction:column; gap:10px; padding-right:2px; }
+.cgg-goal { border:1px solid var(--cgg-border); border-radius:14px; padding:14px; background:color-mix(in srgb, var(--cgg-bg) 96%, var(--cgg-text)); }
+.cgg-goal h3 { font-size:16px; line-height:1.25; }
+.cgg-description { color:var(--cgg-muted); font-size:13px; line-height:1.45; margin:8px 0 12px; white-space:pre-wrap; }
+.cgg-badge { border-radius:999px; padding:3px 7px; font-size:10px; text-transform:uppercase; letter-spacing:.06em; background:rgba(16,163,127,.12); color:var(--cgg-accent); }
+.cgg-done { background:rgba(70,150,90,.14); }
+.cgg-paused { background:rgba(220,150,50,.14); color:#b56f13; }
+.cgg-progress-wrap { gap:9px; }
+.cgg-progress-bar { height:6px; flex:1; border-radius:99px; background:var(--cgg-border); overflow:hidden; }
+.cgg-progress-bar span { display:block; height:100%; background:var(--cgg-accent); border-radius:99px; }
+.cgg-progress-text { min-width:34px; font-size:12px; color:var(--cgg-muted); }
+.cgg-card-actions { gap:7px; margin-top:12px; }
+.cgg-small { padding:7px 9px; font-size:12px; }
+.cgg-card-actions .cgg-icon-btn { margin-left:auto; }
+.cgg-footer { margin-top:auto; color:var(--cgg-muted); font-size:11px; text-align:center; }
+.cgg-empty { text-align:center; padding:38px 20px; border:1px dashed var(--cgg-border); border-radius:14px; }
+.cgg-empty p { color:var(--cgg-muted); font-size:13px; line-height:1.4; }
+.cgg-modal-backdrop { position:fixed; inset:0; z-index:2147483646; background:rgba(0,0,0,.45); display:grid; place-items:center; padding:20px; }
+.cgg-modal { width:min(440px, 92vw); background:var(--cgg-bg); color:var(--cgg-text); border:1px solid var(--cgg-border); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,.3); padding:20px; display:flex; flex-direction:column; gap:12px; font-family:system-ui,sans-serif; }
+.cgg-input { box-sizing:border-box; width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--cgg-border); background:transparent; color:var(--cgg-text); font:14px system-ui,sans-serif; }
+.cgg-textarea { min-height:100px; resize:vertical; }
+.cgg-label { font-size:13px; color:var(--cgg-muted); }
+.cgg-range { width:100%; accent-color:var(--cgg-accent); }
+.cgg-modal-actions { justify-content:flex-end; gap:8px; }
+.cgg-toast { position:fixed; left:50%; bottom:30px; z-index:2147483647; transform:translate(-50%, 10px); opacity:0; padding:10px 14px; border-radius:10px; background:#111; color:white; font:13px system-ui,sans-serif; transition:.2s ease; }
+.cgg-toast.is-visible { transform:translate(-50%,0); opacity:1; }
+.cgg-btn-danger { background:#c83b3b; color:#fff; }
+.cgg-goal.is-running { border-color:var(--cgg-accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--cgg-accent) 18%, transparent); }
+.cgg-running { background:rgba(16,163,127,.16); color:var(--cgg-accent); animation:cgg-pulse 1.5s ease-in-out infinite; }
+@keyframes cgg-pulse { 50% { opacity:.55; } }
