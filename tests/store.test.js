@@ -20,26 +20,41 @@ vm.runInContext(code, context);
 const store = context.ChatGPTGoalStore;
 
 (async () => {
-  const normalized = store.normalizeGoal({ title: ' Ship it ', progress: 120, maxTurns: 999 });
+  const normalized = store.normalizeGoal({ title: ' Ship it ', progress: 120, maxTurns: 999, verificationConfidence: 2 });
   assert.equal(normalized.title, 'Ship it');
   assert.equal(normalized.progress, 100);
   assert.equal(normalized.maxTurns, 100);
+  assert.equal(normalized.verificationConfidence, 1);
 
-  await store.upsertGoal({ id: '1', title: 'Build extension', progress: 25, maxTurns: 12 });
+  await store.upsertGoal({ id: '1', title: 'Build extension', description: 'Tests pass and README updated', progress: 25, maxTurns: 12, verificationConfidence: 0.9 });
   let goals = await store.getGoals();
   assert.equal(goals.length, 1);
   assert.equal(goals[0].maxTurns, 12);
 
-  const prompt = store.formatGoalContext({ ...goals[0], milestones: [{ id: 'm', title: 'Publish repo', done: false }] }, 1);
-  assert(prompt.includes('AUTONOMOUS GOAL MODE'));
-  assert(prompt.includes('[GOAL_COMPLETE]'));
-  assert(prompt.includes('Publish repo'));
+  const work = store.formatGoalContext(goals[0], 1);
+  assert(work.includes('AUTONOMOUS GOAL MODE'));
+  assert(work.includes('Tests pass and README updated'));
+  assert(!work.includes('[GOAL_COMPLETE]'));
 
-  const continuation = store.formatContinuation(goals[0], 2);
-  assert(continuation.includes('turn 2 of 12'));
+  const verify = store.formatVerification(goals[0], 'Implemented tests.', 1);
+  assert(verify.includes('<GOAL_VERDICT>'));
+  assert(verify.includes('LATEST WORK RESPONSE'));
 
-  await store.setActiveRun({ goalId: '1', turn: 1 });
-  assert.equal((await store.getActiveRun()).goalId, '1');
+  const verdict = store.parseVerification('<GOAL_VERDICT>{"complete":true,"confidence":0.95,"satisfiedCriteria":["tests"],"remainingCriteria":[],"evidence":["test output passed"],"nextAction":""}</GOAL_VERDICT>');
+  assert.equal(verdict.complete, true);
+  assert.equal(store.isVerifiedComplete(goals[0], verdict), true);
+
+  assert.equal(store.isVerifiedComplete(goals[0], { ...verdict, confidence: 0.7 }), false);
+  assert.equal(store.isVerifiedComplete(goals[0], { ...verdict, evidence: [] }), false);
+  assert.equal(store.parseVerification('not json'), null);
+
+  const continuation = store.formatContinuation(goals[0], 2, { confidence: 0.6, remainingCriteria: ['README'], nextAction: 'Update README' });
+  assert(continuation.includes('WORK TURN: 2 of 12'));
+  assert(continuation.includes('Update README'));
+  assert(continuation.includes('Tests pass and README updated'));
+
+  await store.setActiveRun({ goalId: '1', turn: 1, phase: 'work' });
+  assert.equal((await store.getActiveRun()).phase, 'work');
   await store.clearActiveRun();
   assert.equal(await store.getActiveRun(), null);
 
