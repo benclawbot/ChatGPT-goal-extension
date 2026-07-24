@@ -1,42 +1,50 @@
 # ChatGPT Goals
 
-A privacy-first Microsoft Edge extension that keeps ChatGPT working toward a persistent goal instead of stopping after the first response.
+A privacy-first Microsoft Edge extension that keeps ChatGPT working toward a persistent goal through alternating **work** and **verification** turns.
 
 ![Edge](https://img.shields.io/badge/Microsoft_Edge-Manifest_V3-0A84FF?logo=microsoftedge)
-![Version](https://img.shields.io/badge/version-1.1.0-10a37f)
+![Version](https://img.shields.io/badge/version-1.2.0-10a37f)
+![Privacy](https://img.shields.io/badge/data-local_only-22C55E)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-## What it does
+## What changed in v1.2
 
-ChatGPT Goals adds a floating **Goals** panel to the ChatGPT web interface. Create a goal, define what completion means, and select **Run until done**.
+The extension no longer trusts a simple completion marker. Every work response is followed by a strict verification request that reintroduces the complete original goal, definition of done, milestones, required confidence, and latest work evidence.
 
-The extension then:
+A goal is accepted as complete only when the structured verdict says:
 
-1. Sends the goal and its definition of done to ChatGPT.
-2. Waits for the current response to finish.
-3. Detects whether ChatGPT returned the completion marker `[GOAL_COMPLETE]`.
-4. Automatically sends a continuation message when more work is required.
-5. Repeats until the goal is complete, you select **Stop**, or the configured turn limit is reached.
+- `complete` is `true`;
+- confidence meets the configured threshold;
+- `remainingCriteria` is empty; and
+- at least one concrete evidence item is present.
 
-This fixes the original one-shot behavior where the extension only inserted context into the composer and stopped after the first ChatGPT reply.
+## How the loop works
+
+1. **Work:** ChatGPT receives the full goal and performs the next concrete action.
+2. **Verify:** The extension sends the full original goal plus the latest work response to a strict evaluator prompt.
+3. **Decide:** The extension parses a structured `<GOAL_VERDICT>` JSON result.
+4. **Continue:** When incomplete, the next work prompt includes the full goal, remaining criteria, confidence, and verifier-selected next action.
+5. **Complete:** The run stops only after the verdict passes all completion gates.
+
+The cycle repeats until completion, manual stop, an unrecoverable UI error, or the maximum number of work turns.
 
 ## Features
 
-- Persistent goals stored locally in Edge
-- Autonomous multi-turn execution loop
-- Configurable limit from 1 to 100 turns
-- Explicit `[GOAL_COMPLETE]` completion protocol
-- Visible running state and turn counter
+- Persistent local goals
+- Autonomous multi-turn execution
+- Full-goal reinjection on every work and verification turn
+- Evidence-based structured completion verdicts
+- Configurable 50–100% verification threshold
+- Configurable 1–100 maximum work turns
+- Visible **working** and **verifying** states
 - Manual Stop control
-- Active-run recovery after page refresh
-- Progress and status tracking
-- Light and dark mode support
-- No backend, analytics, account, or external API
-- Manifest V3 and no build step
+- Run recovery after page refresh
+- No backend, analytics, telemetry, account, or external API
+- Manifest V3 with no build step
 
 ## Install in Microsoft Edge
 
-1. Download the repository with **Code → Download ZIP**, or clone it:
+1. Download this repository with **Code → Download ZIP**, or clone it:
 
    ```bash
    git clone https://github.com/benclawbot/ChatGPT-goal-extension.git
@@ -49,81 +57,63 @@ This fixes the original one-shot behavior where the extension only inserted cont
 6. Open or refresh `https://chatgpt.com`.
 7. Select the floating **Goals** button.
 
-After pulling an update, select **Reload** on the extension card in `edge://extensions` and refresh ChatGPT.
+After updating, select **Reload** on the extension card and refresh ChatGPT.
 
-## Usage
+## Create a verifiable goal
 
-### Create a useful goal
-
-A strong goal contains a clear definition of done. For example:
-
-**Goal**
+Write the definition of done as measurable criteria and name the evidence expected. For example:
 
 ```text
-Prepare the repository for a public v1 release
+Review the extension, fix blocking defects, run all available tests, update the
+README, and provide the exact test result. Completion requires passing tests,
+updated source and documentation, and no unresolved blocker.
 ```
 
-**Definition of done / constraints**
+Set a verification threshold—85% is the default—and select **Run until verified**.
 
-```text
-Review the code, fix blocking defects, run available tests, update the README,
-and produce a final release checklist. Do not stop at planning; complete each
-available step. The goal is complete only when all checks pass or remaining
-blockers are explicitly documented.
+## Structured verdict
+
+The verifier must return:
+
+```json
+{
+  "complete": false,
+  "confidence": 0.72,
+  "satisfiedCriteria": ["Source updated"],
+  "remainingCriteria": ["Run tests"],
+  "evidence": ["content.js contains the new runner"],
+  "nextAction": "Run the test suite and fix any failures"
+}
 ```
 
-Set the maximum autonomous turns, save the goal, then select **Run until done**.
+The JSON is wrapped in `<GOAL_VERDICT>` tags for reliable extraction.
 
-### Completion behavior
+## Safety and limitations
 
-The initial prompt instructs ChatGPT to finish with the exact marker:
+The extension coordinates messages in the current ChatGPT tab. It does not bypass safety policies, confirmations, tool permissions, authentication, or usage limits. The verifier is still the model in the same conversation, so this is stronger self-verification—not an independent external oracle. Concrete definitions of done and evidence requirements materially improve reliability.
 
-```text
-[GOAL_COMPLETE]
-```
-
-The extension stops automatically when that marker appears. It also stops when:
-
-- you select **Stop**;
-- the maximum turn count is reached;
-- the goal is deleted or already marked complete;
-- ChatGPT's composer or send button is unavailable.
-
-## Important limitations
-
-The extension coordinates messages in the current browser tab. It does **not** bypass ChatGPT safety policies, confirmations, tool permissions, usage limits, or authentication. Keep the ChatGPT tab open while the loop is running.
-
-ChatGPT's web interface changes frequently. The extension uses several defensive selectors, but a future UI update may require selector maintenance.
+ChatGPT’s DOM changes over time. Defensive selectors are included, but future interface changes may require maintenance.
 
 ## Privacy
 
-The extension requests only local storage and access to ChatGPT pages.
-
-| Permission | Reason |
-| --- | --- |
-| `storage` | Save goals and active-run state locally. |
-| `chatgpt.com` / `chat.openai.com` | Add the Goals interface, monitor completed replies, and submit continuation messages. |
-
-There is no analytics, remote database, telemetry, or external API call in the extension.
+Goals, thresholds, and active-run state are stored in `chrome.storage.local`. The extension makes no external network calls of its own. Goal content enters ChatGPT only when you start a run.
 
 ## Development
 
-Requires Node.js 18 or later for tests.
+Requires Node.js 18 or newer:
 
 ```bash
 npm test
 ```
-
-No bundler is required. Edit the files, reload the extension in Edge, and refresh ChatGPT.
 
 ## Structure
 
 ```text
 ├── manifest.json
 ├── src/
-│   ├── content.js      Autonomous runner and ChatGPT integration
+│   ├── content.js      Work/verify runner and ChatGPT integration
 │   ├── content.css     Injected Goals panel styles
-│   ├── store.js        Goal and run-state persistence
+│   ├── store.js        Goal state, prompts, verdict parsing, completion gates
 │   ├── popup.html
 │   └── popup.css
 ├── tests/
