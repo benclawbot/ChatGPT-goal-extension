@@ -1,0 +1,8 @@
+{
+  "name": "chatgpt-goal-extension",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/store.test.js"
+  }
+}
